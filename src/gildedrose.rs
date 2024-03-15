@@ -43,10 +43,8 @@ impl GildedRose {
                 continue;
             }
 
-            if self.items[i].name != QUALITY_INCREASING_ITEM && self.items[i].name != QUALITY_ZERO_AFTER_SELL_IN_ITEM
+            if self.items[i].name == QUALITY_INCREASING_ITEM || self.items[i].name == QUALITY_ZERO_AFTER_SELL_IN_ITEM
             {
-                self.degrade_quality_by_one(i);
-            } else {
                 self.increase_quality_by_one(i);
 
                 if self.items[i].name == QUALITY_ZERO_AFTER_SELL_IN_ITEM {
@@ -58,19 +56,21 @@ impl GildedRose {
                         self.increase_quality_by_one(i);
                     }
                 }
+            } else {
+                self.degrade_quality_by_one(i);
             }
 
             self.items[i].sell_in = self.items[i].sell_in - 1;
 
             if self.items[i].sell_in < 0 {
-                if self.items[i].name != QUALITY_INCREASING_ITEM {
-                    if self.items[i].name != QUALITY_ZERO_AFTER_SELL_IN_ITEM {
-                        self.degrade_quality_by_one(i);
-                    } else {
-                        self.items[i].quality = self.items[i].quality - self.items[i].quality;
-                    }
-                } else {
+                if self.items[i].name == QUALITY_INCREASING_ITEM {
                     self.increase_quality_by_one(i);
+                } else {
+                    if self.items[i].name == QUALITY_ZERO_AFTER_SELL_IN_ITEM {
+                        self.items[i].quality = self.items[i].quality - self.items[i].quality;
+                    } else {
+                        self.degrade_quality_by_one(i);
+                    }
                 }
             }
         }
