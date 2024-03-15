@@ -1,3 +1,4 @@
+use std::cmp;
 use std::fmt::{self, Display};
 
 const QUALITY_INCREASING_ITEM: &str = "Aged Brie";
@@ -5,6 +6,10 @@ const QUALITY_ZERO_AFTER_SELL_IN_ITEM: &str = "Backstage passes to a TAFKAL80ETC
 const CONJURED_ITEM: &str = "Conjured Mana Cake";
 const COMMON_ITEM: &str = "Elixir of the Mongoose";
 const LEGENDARY_ITEM: &str = "Sulfuras, Hand of Ragnaros";
+
+const MAXIMUM_ALLOWED_QUALITY: i32 = 50;
+const MINIMUM_ALLOWED_QUALITY: i32 = 0;
+
 
 pub struct Item {
     pub name: String,
@@ -28,6 +33,7 @@ impl Display for Item {
     }
 }
 
+
 pub struct GildedRose {
     pub items: Vec<Item>,
 }
@@ -39,46 +45,54 @@ impl GildedRose {
 
     pub fn update_quality(&mut self) {
         for i in 0..self.items.len() {
-            if self.items[i].name == LEGENDARY_ITEM {
+            let item = &mut self.items[i];
+
+            if item.name == LEGENDARY_ITEM {
                 continue;
             }
 
-            if self.items[i].name == QUALITY_INCREASING_ITEM  {
-                self.increase_quality_by_one(i);
-            } else if self.items[i].name == QUALITY_ZERO_AFTER_SELL_IN_ITEM {
-                self.increase_quality_by_one(i);
-                if self.items[i].sell_in < 11 { self.increase_quality_by_one(i); }
-                if self.items[i].sell_in < 6 { self.increase_quality_by_one(i); }
+            if item.name == QUALITY_INCREASING_ITEM {
+                item.quality = GildedRose::get_adjusted_quality_within_bounds(item, 1);
+            } else if item.name == QUALITY_ZERO_AFTER_SELL_IN_ITEM {
+                if item.sell_in <= 5 {
+                    item.quality = GildedRose::get_adjusted_quality_within_bounds(item, 3);
+                } else if item.sell_in <= 10 {
+                    item.quality = GildedRose::get_adjusted_quality_within_bounds(item, 2);
+                } else {
+                    item.quality = GildedRose::get_adjusted_quality_within_bounds(item, 1);
+                }
             } else {
-                self.degrade_quality_by_one(i);
+                item.quality = GildedRose::get_adjusted_quality_within_bounds(item, -1);
             }
 
-            self.items[i].sell_in = self.items[i].sell_in - 1;
-
-            if self.items[i].sell_in < 0 {
-                if self.items[i].name == QUALITY_INCREASING_ITEM {
-                    self.increase_quality_by_one(i);
-                } else if self.items[i].name == QUALITY_ZERO_AFTER_SELL_IN_ITEM {
-                    self.items[i].quality = 0;
+            if item.sell_in <= 0 {
+                if item.name == QUALITY_INCREASING_ITEM {
+                    item.quality = GildedRose::get_adjusted_quality_within_bounds(item, 1);
+                } else if item.name == QUALITY_ZERO_AFTER_SELL_IN_ITEM {
+                    item.quality = 0;
                 } else {
-                    self.degrade_quality_by_one(i);
+                    item.quality = GildedRose::get_adjusted_quality_within_bounds(item, -1);
                 }
             }
+
+            item.sell_in -= 1;
         }
     }
 
-    fn increase_quality_by_one(&mut self, i: usize) {
-        if self.items[i].quality < 50 {
-            self.items[i].quality = self.items[i].quality + 1;
-        }
-    }
-
-    fn degrade_quality_by_one(&mut self, i: usize) {
-        if self.items[i].quality > 0 {
-            self.items[i].quality = self.items[i].quality - 1;
-        }
+    fn get_adjusted_quality_within_bounds(item: &Item, adjust_by: i32) -> i32 {
+        let new_quality = item.quality + adjust_by;
+        cmp::max(
+            cmp::min(
+                new_quality,
+                MAXIMUM_ALLOWED_QUALITY
+            ),
+            MINIMUM_ALLOWED_QUALITY
+        )
     }
 }
+
+
+
 
 #[cfg(test)]
 mod tests {
