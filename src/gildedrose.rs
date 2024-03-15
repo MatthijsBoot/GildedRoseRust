@@ -45,25 +45,17 @@ impl GildedRose {
 
             if self.items[i].name != QUALITY_INCREASING_ITEM && self.items[i].name != QUALITY_ZERO_AFTER_SELL_IN_ITEM
             {
-                if self.items[i].quality > 0 {
-                        self.items[i].quality = self.items[i].quality - 1;
-                }
+                self.degrade_quality_by_one(i);
             } else {
-                if self.items[i].quality < 50 {
-                    self.items[i].quality = self.items[i].quality + 1;
+                self.increase_quality_by_one(i);
 
-                    if self.items[i].name == QUALITY_ZERO_AFTER_SELL_IN_ITEM {
-                        if self.items[i].sell_in < 11 {
-                            if self.items[i].quality < 50 {
-                                self.items[i].quality = self.items[i].quality + 1;
-                            }
-                        }
+                if self.items[i].name == QUALITY_ZERO_AFTER_SELL_IN_ITEM {
+                    if self.items[i].sell_in < 11 {
+                        self.increase_quality_by_one(i);
+                    }
 
-                        if self.items[i].sell_in < 6 {
-                            if self.items[i].quality < 50 {
-                                self.items[i].quality = self.items[i].quality + 1;
-                            }
-                        }
+                    if self.items[i].sell_in < 6 {
+                        self.increase_quality_by_one(i);
                     }
                 }
             }
@@ -73,18 +65,26 @@ impl GildedRose {
             if self.items[i].sell_in < 0 {
                 if self.items[i].name != QUALITY_INCREASING_ITEM {
                     if self.items[i].name != QUALITY_ZERO_AFTER_SELL_IN_ITEM {
-                        if self.items[i].quality > 0 {
-                                self.items[i].quality = self.items[i].quality - 1;
-                        }
+                        self.degrade_quality_by_one(i);
                     } else {
                         self.items[i].quality = self.items[i].quality - self.items[i].quality;
                     }
                 } else {
-                    if self.items[i].quality < 50 {
-                        self.items[i].quality = self.items[i].quality + 1;
-                    }
+                    self.increase_quality_by_one(i);
                 }
             }
+        }
+    }
+
+    fn increase_quality_by_one(&mut self, i: usize) {
+        if self.items[i].quality < 50 {
+            self.items[i].quality = self.items[i].quality + 1;
+        }
+    }
+
+    fn degrade_quality_by_one(&mut self, i: usize) {
+        if self.items[i].quality > 0 {
+            self.items[i].quality = self.items[i].quality - 1;
         }
     }
 }
