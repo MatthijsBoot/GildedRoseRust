@@ -59,7 +59,7 @@ impl GildedRose {
                 if self.items[i].name == QUALITY_INCREASING_ITEM {
                     self.increase_quality_by_one(i);
                 } else if self.items[i].name == QUALITY_ZERO_AFTER_SELL_IN_ITEM {
-                    self.items[i].quality = self.items[i].quality - self.items[i].quality;
+                    self.items[i].quality = 0;
                 } else {
                     self.degrade_quality_by_one(i);
                 }
