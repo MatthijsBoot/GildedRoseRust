@@ -44,42 +44,59 @@ impl GildedRose {
     }
 
     pub fn update_quality(&mut self) {
-        for i in 0..self.items.len() {
-            let item = &mut self.items[i];
+        for item in &mut self.items {
 
             if item.name == LEGENDARY_ITEM {
                 continue;
             }
 
-            if item.name == QUALITY_INCREASING_ITEM {
-                item.quality = GildedRose::get_adjusted_quality_within_bounds(item, 1);
-            } else if item.name == QUALITY_ZERO_AFTER_SELL_IN_ITEM {
-                if item.sell_in <= 5 {
-                    item.quality = GildedRose::get_adjusted_quality_within_bounds(item, 3);
-                } else if item.sell_in <= 10 {
-                    item.quality = GildedRose::get_adjusted_quality_within_bounds(item, 2);
-                } else {
-                    item.quality = GildedRose::get_adjusted_quality_within_bounds(item, 1);
-                }
-            } else {
-                item.quality = GildedRose::get_adjusted_quality_within_bounds(item, -1);
-            }
-
-            if item.sell_in <= 0 {
-                if item.name == QUALITY_INCREASING_ITEM {
-                    item.quality = GildedRose::get_adjusted_quality_within_bounds(item, 1);
-                } else if item.name == QUALITY_ZERO_AFTER_SELL_IN_ITEM {
-                    item.quality = 0;
-                } else {
-                    item.quality = GildedRose::get_adjusted_quality_within_bounds(item, -1);
-                }
-            }
+            item.quality = match item.name.as_str() {
+                QUALITY_INCREASING_ITEM => Self::quality_increasing_update_strategy(item),
+                QUALITY_ZERO_AFTER_SELL_IN_ITEM => Self::quality_zero_after_sell_in_update_strategy(item),
+                _ => Self::default_quality_update_strategy(item)
+            };
 
             item.sell_in -= 1;
         }
     }
 
-    fn get_adjusted_quality_within_bounds(item: &Item, adjust_by: i32) -> i32 {
+    fn quality_increasing_update_strategy(item: &Item) -> i32 {
+        let quality_adjustment =
+            if item.sell_in <= 0 {
+                2
+            } else {
+                1
+            };
+        return Self::get_updated_quality_within_bounds(item, quality_adjustment);
+    }
+
+    fn quality_zero_after_sell_in_update_strategy(item: &Item) -> i32 {
+        if item.sell_in <= 0 {
+             return 0
+        }
+
+        let quality_adjustment =
+            if item.sell_in <= 5 {
+                3
+            } else if item.sell_in <= 10 {
+                2
+            } else {
+                1
+            };
+        return Self::get_updated_quality_within_bounds(item, quality_adjustment);
+    }
+
+    fn default_quality_update_strategy(item: &Item) -> i32 {
+        let quality_adjustment =
+            if item.sell_in <= 0 {
+                -2
+            } else {
+                -1
+            };
+        return Self::get_updated_quality_within_bounds(item, quality_adjustment);
+    }
+
+    fn get_updated_quality_within_bounds(item: &Item, adjust_by: i32) -> i32 {
         let new_quality = item.quality + adjust_by;
         cmp::max(
             cmp::min(
@@ -90,9 +107,6 @@ impl GildedRose {
         )
     }
 }
-
-
-
 
 #[cfg(test)]
 mod tests {
