@@ -1,10 +1,10 @@
 use std::cmp;
 use std::fmt::{self, Display};
 
-const QUALITY_INCREASING_ITEM: &str = "Aged Brie";
-const QUALITY_ZERO_AFTER_SELL_IN_ITEM: &str = "Backstage passes to a TAFKAL80ETC concert";
-const CONJURED_ITEM: &str = "Conjured Mana Cake";
+const AGED_BRIE_ITEM: &str = "Aged Brie";
+const BACKSTAGE_PASSES_ITEM: &str = "Backstage passes to a TAFKAL80ETC concert";
 const COMMON_ITEM: &str = "Elixir of the Mongoose";
+const CONJURED_ITEM: &str = "Conjured Mana Cake";
 const LEGENDARY_ITEM: &str = "Sulfuras, Hand of Ragnaros";
 
 const MAXIMUM_ALLOWED_QUALITY: i32 = 50;
@@ -51,9 +51,10 @@ impl GildedRose {
             }
 
             item.quality = match item.name.as_str() {
-                QUALITY_INCREASING_ITEM => Self::quality_increasing_update_strategy(item),
-                QUALITY_ZERO_AFTER_SELL_IN_ITEM => Self::quality_zero_after_sell_in_update_strategy(item),
-                _ => Self::default_quality_update_strategy(item)
+                AGED_BRIE_ITEM => Self::quality_increasing_update_strategy(item),
+                BACKSTAGE_PASSES_ITEM => Self::backstage_passes_update_strategy(item),
+                CONJURED_ITEM => Self::faster_degrading_update_strategy(item),
+                _ => Self::default_update_strategy(item)
             };
 
             item.sell_in -= 1;
@@ -70,7 +71,7 @@ impl GildedRose {
         return Self::get_updated_quality_within_bounds(item, quality_adjustment);
     }
 
-    fn quality_zero_after_sell_in_update_strategy(item: &Item) -> i32 {
+    fn backstage_passes_update_strategy(item: &Item) -> i32 {
         if item.sell_in <= 0 {
              return 0
         }
@@ -86,7 +87,17 @@ impl GildedRose {
         return Self::get_updated_quality_within_bounds(item, quality_adjustment);
     }
 
-    fn default_quality_update_strategy(item: &Item) -> i32 {
+    fn faster_degrading_update_strategy(item: &Item) -> i32 {
+        let quality_adjustment =
+            if item.sell_in <= 0 {
+                -4
+            } else {
+                -2
+            };
+        return Self::get_updated_quality_within_bounds(item, quality_adjustment);
+    }
+
+    fn default_update_strategy(item: &Item) -> i32 {
         let quality_adjustment =
             if item.sell_in <= 0 {
                 -2
@@ -110,10 +121,10 @@ impl GildedRose {
 
 #[cfg(test)]
 mod tests {
-    use super::{GildedRose, Item, COMMON_ITEM, CONJURED_ITEM, LEGENDARY_ITEM, QUALITY_INCREASING_ITEM, QUALITY_ZERO_AFTER_SELL_IN_ITEM };
+    use super::{GildedRose, Item, COMMON_ITEM, CONJURED_ITEM, LEGENDARY_ITEM, AGED_BRIE_ITEM, BACKSTAGE_PASSES_ITEM};
 
     mod regression_test_suite {
-        use gildedrose::tests::{COMMON_ITEM, LEGENDARY_ITEM, QUALITY_INCREASING_ITEM, QUALITY_ZERO_AFTER_SELL_IN_ITEM};
+        use gildedrose::tests::{COMMON_ITEM, LEGENDARY_ITEM, AGED_BRIE_ITEM, BACKSTAGE_PASSES_ITEM};
         use super::{GildedRose, Item};
 
         #[test]
@@ -206,8 +217,8 @@ mod tests {
         fn test_quality_increasing_items() {
             // GIVEN items of which quality increases when it gets older
             let items = vec![
-                Item::new(QUALITY_INCREASING_ITEM, 2, 0),
-                Item::new(QUALITY_INCREASING_ITEM, 4, 49),
+                Item::new(AGED_BRIE_ITEM, 2, 0),
+                Item::new(AGED_BRIE_ITEM, 4, 49),
             ];
             let mut rose = GildedRose::new(items);
 
@@ -247,9 +258,9 @@ mod tests {
         fn test_quality_zero_after_sell_in_items() {
             // GIVEN items of which quality increases more towards sell-in date and becomes 0 after
             let items = vec![
-                Item::new(QUALITY_ZERO_AFTER_SELL_IN_ITEM, 15, 20),
-                Item::new(QUALITY_ZERO_AFTER_SELL_IN_ITEM, 10, 0),
-                Item::new(QUALITY_ZERO_AFTER_SELL_IN_ITEM, 5, 48),
+                Item::new(BACKSTAGE_PASSES_ITEM, 15, 20),
+                Item::new(BACKSTAGE_PASSES_ITEM, 10, 0),
+                Item::new(BACKSTAGE_PASSES_ITEM, 5, 48),
             ];
             let mut rose = GildedRose::new(items);
 
@@ -302,7 +313,6 @@ mod tests {
         use super::{GildedRose, Item};
 
         #[test]
-        #[ignore] // uncomment after implementing feature
         fn test_conjured_item_quality_update() {
             // GIVEN a conjured item
             let items = vec![
